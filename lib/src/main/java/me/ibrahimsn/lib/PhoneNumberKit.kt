@@ -50,15 +50,18 @@ class PhoneNumberKit private constructor(
             input.get()?.editText?.setText(value)
         }
 
+    private var textChangedListener: MaskedTextChangedListener? = null
+
     val isValid: Boolean get() = validate(inputValue)
+
+    //allows to react on icon setting intention
+    var onCountryIconSetListener: ((Country) -> Boolean)? = null
 
     init {
         scope.launch(Dispatchers.IO) {
             countriesCache.addAll(getCountries())
         }
     }
-
-    private var textChangedListener: MaskedTextChangedListener? = null
 
     private fun setupListener(editText: EditText, pattern: String) {
         editText.removeTextChangedListener(textChangedListener)
@@ -92,7 +95,7 @@ class PhoneNumberKit private constructor(
         )
     }
 
-    private fun setCountry(countryIso2: String) = scope.launch {
+    fun setCountry(countryIso2: String) = scope.launch {
         val country = default {
             getCountries().findCountry(
                 countryIso2.trim().lowercase(Locale.ENGLISH)
@@ -101,7 +104,7 @@ class PhoneNumberKit private constructor(
         setCountry(country)
     }
 
-    private fun setCountry(country: Country) {
+    fun setCountry(country: Country) {
         val formattedNumber = proxy.formatPhoneNumber(
             proxy.getExampleNumber(country.iso2)
         )
@@ -152,8 +155,10 @@ class PhoneNumberKit private constructor(
                 is State.Ready -> {}
                 is State.Attached -> {
                     if (isIconEnabled) {
-                        getFlagIcon(state.country.iso2)?.let { icon ->
-                            input.get()?.startIconDrawable = icon
+                        if (onCountryIconSetListener?.invoke(state.country) == true) {
+                            getFlagIcon(state.country.iso2)?.let { icon ->
+                                input.get()?.startIconDrawable = icon
+                            }
                         }
                     }
                     input.get()?.editText?.let { editText ->
