@@ -97,7 +97,9 @@ class PhoneNumberKit private constructor(
 
     fun setCountry(countryIso2: String) = scope.launch {
         val country = default {
-            getCountries().findCountry(
+            val list = getCountries()
+            findCountry(
+                list,
                 countryIso2.trim().lowercase(Locale.ENGLISH)
             )
         } ?: return@launch
@@ -139,7 +141,9 @@ class PhoneNumberKit private constructor(
         this.input = WeakReference(input)
         scope.launch {
             val country = default {
-                getCountries().findCountry(
+                val list = getCountries()
+                findCountry(
+                    list,
                     countryIso2.trim().lowercase(Locale.ENGLISH)
                 )
             }
@@ -172,7 +176,7 @@ class PhoneNumberKit private constructor(
         }
     }
 
-    private suspend fun getCountries() = io {
+    suspend fun getCountries() = io {
         if (countriesCache.isEmpty()) {
             FileReader.readAssetFile(context, ASSET_FILE_NAME).toCountryList()
         } else {
@@ -292,9 +296,10 @@ class PhoneNumberKit private constructor(
         it.code == countryCode
     }
 
-    private fun List<Country>.findCountry(
+    fun findCountry(
+        list: List<Country>,
         countryIso2: String?
-    ) = this.filter {
+    ) = list.filter {
         admittedCountries.isEmpty() || admittedCountries.contains(it.iso2)
     }.filterNot {
         excludedCountries.contains(it.iso2)
