@@ -1,5 +1,6 @@
 package me.ibrahimsn.lib.internal.ui
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +36,8 @@ class CountryPickerBottomSheet : BottomSheetDialogFragment() {
 
     var onCountrySelectedListener: ((Country) -> Unit)? = null
 
+    var onCancelledListener: (() -> Unit)? = null
+
     private val viewState: MutableStateFlow<CountryPickerViewState> = MutableStateFlow(
         CountryPickerViewState(emptyList())
     )
@@ -50,6 +53,11 @@ class CountryPickerBottomSheet : BottomSheetDialogFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.ThemeOverlay_PhoneNumberKit_BottomSheetDialog)
+    }
+
+    override fun onCancel(dialog: DialogInterface) {
+        onCancelledListener?.invoke()
+        super.onCancel(dialog)
     }
 
     override fun onCreateView(
@@ -79,6 +87,7 @@ class CountryPickerBottomSheet : BottomSheetDialogFragment() {
 
         imageButtonClose.setOnClickListener {
             dismiss()
+            onCancelledListener?.invoke()
         }
 
         searchView.setOnQueryTextListener(object: SearchView.OnQueryTextListener {
